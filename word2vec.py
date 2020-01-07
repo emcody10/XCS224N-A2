@@ -18,6 +18,7 @@ def sigmoid(x):
     """
 
     ### YOUR CODE HERE
+    s = 1/(1 + np.exp(-x))
     ### END YOUR CODE
 
     return s
@@ -57,6 +58,13 @@ def naiveSoftmaxLossAndGradient(
     """
 
     ### YOUR CODE HERE
+    y_hat = softmax(np.dot(outsideVectors, centerWordVec)) # U*vc: (w x e) * (e x 1) = (w x 1)
+    loss = -np.log(y_hat[outsideWordIdx])
+
+    y = np.zeros(len(outsideVectors))
+    y[outsideWordIdx] = 1 # one hot vector
+    gradCenterVec = np.dot(outsideVectors.T, y_hat - y) # UT*(y_hat-y): (e x w) * (e x 1) = (e x 1)
+    gradOutsideVecs = np.dot(np.expand_dims(centerWordVec, 1), (np.expand_dims(y_hat-y, 0))).T # vc(y_hat-y)T: (e x 1) * (1 x w) = (e x w)
     ### END YOUR CODE
 
     return loss, gradCenterVec, gradOutsideVecs
@@ -146,6 +154,16 @@ def skipgram(currentCenterWord, windowSize, outsideWords, word2Ind,
     gradOutsideVectors = np.zeros(outsideVectors.shape)
 
     ### YOUR CODE HERE
+    centerWordIdx = word2Ind[currentCenterWord]
+    for word in outsideWords:
+        curr_loss, curr_gradc, curr_grado = naiveSoftmaxLossAndGradient(centerWordVectors[centerWordIdx],
+                                                                        word2Ind[word],
+                                                                        outsideVectors,
+                                                                        dataset)
+        loss += curr_loss
+        gradCenterVecs[centerWordIdx] += curr_gradc
+        gradOutsideVectors += curr_grado
+
     ### END YOUR CODE
 
     return loss, gradCenterVecs, gradOutsideVectors
